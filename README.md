@@ -2,6 +2,12 @@
 
 ![http://optiboot.googlecode.com/files/optiboot.png](http://optiboot.googlecode.com/files/optiboot.png)
 
+## NOTE: BIGBOOT enabled for ATmega328p
+
+* BIGBOOT option (enables EEPROM read/write) enabled in master branch.
+
+## Original notes follow
+
 Optiboot is an easy to install upgrade to the Arduino bootloader within Arduino boards. It provides the following features:
 
   * Allows larger sketches. Optiboot is a quarter of the size of the default bootloader, freeing 1.5k of extra space.
