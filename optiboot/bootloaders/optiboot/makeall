@@ -29,4 +29,4 @@ make xplained328pb
 # These need to be built AFTER the platforms, or they'll get renamed
 make atmega8
 make atmega168
-make atmega328
+make BIGBOOT=1 atmega328
