@@ -165,9 +165,11 @@ else
 LED_START_FLASHES_CMD = -DLED_START_FLASHES=3
 endif
 
+TEXT_START = e00
 # BIG_BOOT: Include extra features, up to 1K.
 ifdef BIGBOOT
 BIGBOOT_CMD = -DBIGBOOT=1
+TEXT_START = c00
 dummy = FORCE
 endif
 
@@ -297,7 +299,7 @@ atmega328: TARGET = atmega328
 atmega328: MCU_TARGET = atmega328p
 atmega328: CFLAGS += $(COMMON_OPTIONS)
 atmega328: AVR_FREQ ?= 16000000L
-atmega328: LDSECTIONS  = -Wl,--section-start=.text=0x7e00 -Wl,--section-start=.version=0x7ffe
+atmega328: LDSECTIONS  = -Wl,--section-start=.text=0x7$(TEXT_START) -Wl,--section-start=.version=0x7ffe
 atmega328: $(PROGRAM)_atmega328.hex
 atmega328: $(PROGRAM)_atmega328.lst
 
