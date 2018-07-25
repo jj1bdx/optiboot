@@ -12,7 +12,7 @@
  */
 
 /*------------------------------------------------------------------------ */
-#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega88) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega88__)
+#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega88) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega88__)
 /*------------------------------------------------------------------------ */
 
 /* Onboard LED is connected to pin PB5 in Arduino NG, Diecimila, and Duemilanove
@@ -61,7 +61,7 @@
 # define UART_SRL UBRR2L
 # define UART_UDR UDR2
 #elif UART == 3
-#if !defined(UDR1)
+#if !defined(UDR3)
 #error UART == 3, but no UART3 on device
 #endif
 # define UART_SRA UCSR3A
@@ -125,7 +125,7 @@
 
 /*------------------------------------------------------------------------ */
 /* Mega support */
-#if defined(__AVR_ATmega1280__)
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
 /*------------------------------------------------------------------------ */
 /* Onboard LED is connected to pin PB7 on Arduino Mega */ 
 #if !defined(LED)

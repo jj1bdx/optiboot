@@ -126,19 +126,12 @@ OPTIMIZE = -Os -fno-split-wide-types -mrelax
 
 DEFS       = 
 
-#
-# platforms support EEPROM and large bootloaders need the eeprom functions that
-# are defined in libc, even though we explicity remove it with -nostdlib because
-# of the space-savings.
-LIBS       =  -lc
-
 CC         = $(GCCROOT)avr-gcc
 
 # Override is only needed by avr-lib build system.
 
 override CFLAGS        = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) -DF_CPU=$(AVR_FREQ) $(DEFS)
-override LDFLAGS       = $(LDSECTIONS) -Wl,--relax -nostartfiles -nostdlib
-#-Wl,--gc-sections
+override LDFLAGS       = $(LDSECTIONS) -Wl,--relax -nostartfiles
 
 OBJCOPY        = $(GCCROOT)avr-objcopy
 OBJDUMP        = $(call fixpath,$(GCCROOT)avr-objdump)
@@ -165,11 +158,14 @@ else
 LED_START_FLASHES_CMD = -DLED_START_FLASHES=3
 endif
 
-TEXT_START = e00
+ifdef LED_START_ON
+LED_START_ON_CMD = -DLED_START_ON=1
+dummy = FORCE
+endif
+
 # BIG_BOOT: Include extra features, up to 1K.
 ifdef BIGBOOT
 BIGBOOT_CMD = -DBIGBOOT=1
-TEXT_START = c00
 dummy = FORCE
 endif
 
@@ -194,6 +190,7 @@ endif
 
 COMMON_OPTIONS = $(BAUD_RATE_CMD) $(LED_START_FLASHES_CMD) $(BIGBOOT_CMD)
 COMMON_OPTIONS += $(SOFT_UART_CMD) $(LED_DATA_FLASH_CMD) $(LED_CMD) $(SS_CMD)
+COMMON_OPTIONS += $(SUPPORT_EEPROM_CMD) $(LED_START_ON_CMD)
 
 #UART is handled separately and only passed for devices with more than one.
 ifdef UART
@@ -201,10 +198,10 @@ UART_CMD = -DUART=$(UART)
 endif
 
 # Not supported yet
-# ifdef SUPPORT_EEPROM
-# SUPPORT_EEPROM_CMD = -DSUPPORT_EEPROM
-# dummy = FORCE
-# endif
+ifdef SUPPORT_EEPROM
+SUPPORT_EEPROM_CMD = -DSUPPORT_EEPROM
+dummy = FORCE
+endif
 
 # Not supported yet
 # ifdef TIMEOUT_MS
@@ -242,7 +239,8 @@ virboot8: TARGET = atmega8
 virboot8: MCU_TARGET = atmega8
 virboot8: CFLAGS += $(COMMON_OPTIONS) '-DVIRTUAL_BOOT_PARTITION' '-Dsave_vect_num=EE_RDY_vect_num'
 virboot8: AVR_FREQ ?= 16000000L 
-virboot8: LDSECTIONS  = -Wl,--section-start=.text=0x1c00 -Wl,--section-start=.version=0x1ffe
+# Start address of 1D80 allows for size up to 640 bytes, app up to 7552
+virboot8: LDSECTIONS  = -Wl,--section-start=.text=0x1d80 -Wl,--section-start=.version=0x1ffe
 virboot8: $(PROGRAM)_virboot8.hex
 virboot8: $(PROGRAM)_virboot8.lst
 
@@ -263,8 +261,20 @@ virboot328_isp: HFUSE ?= DF
 # Low power xtal (16MHz) 16KCK/14CK+65ms
 virboot328_isp: LFUSE ?= FF
 # 2.7V brownout
-virboot328_isp: EFUSE ?= 05
+virboot328_isp: EFUSE ?= FD
 virboot328_isp: isp
+
+virboot8_isp: virboot8
+virboot8_isp: TARGET = virboot8
+virboot8_isp: MCU_TARGET = atmega8
+# SPIEN, CKOPT (for full swing xtal), boot section 1k
+#  Note that we need boot section to include our SPM instructions,
+#   even though we do not enable BOOTRST
+virboot8_isp: HFUSE ?= CB
+# 2.7V brownout, 16MHz Xtal, 16KCK/14CK+65ms
+virboot8_isp: LFUSE ?= BF
+virboot8_isp: isp
+
 
 
 # Diecimila, Duemilanove with m168, and NG use identical bootloaders
@@ -274,7 +284,12 @@ virboot328_isp: isp
 atmega168: TARGET = atmega168
 atmega168: MCU_TARGET = atmega168
 atmega168: CFLAGS += $(COMMON_OPTIONS)
-atmega168: AVR_FREQ ?= 16000000L 
+atmega168: AVR_FREQ ?= 16000000L
+ifndef BIGBOOT
+atmega168: LDSECTIONS  = -Wl,--section-start=.text=0x3e00 -Wl,--section-start=.version=0x3ffe
+else
+atmeg168: LDSECTIONS  = -Wl,--section-start=.text=0x3c00 -Wl,--section-start=.version=0x3ffe
+endif
 atmega168: $(PROGRAM)_atmega168.hex
 atmega168: $(PROGRAM)_atmega168.lst
 
@@ -284,8 +299,13 @@ atmega168_isp: TARGET = atmega168
 atmega168_isp: HFUSE ?= DD
 # Full swing (16MHz) 16KCK/14CK+65ms
 atmega168_isp: LFUSE ?= F7
+ifndef BIGBOOT
 # 512 byte boot
 atmega168_isp: EFUSE ?= 04
+else
+# 1024byte boot
+atmega168_isp: EFUSE ?= FA
+endif
 atmega168_isp: isp
 
 atmega16: TARGET = atmega16
@@ -299,19 +319,29 @@ atmega328: TARGET = atmega328
 atmega328: MCU_TARGET = atmega328p
 atmega328: CFLAGS += $(COMMON_OPTIONS)
 atmega328: AVR_FREQ ?= 16000000L
-atmega328: LDSECTIONS  = -Wl,--section-start=.text=0x7$(TEXT_START) -Wl,--section-start=.version=0x7ffe
+ifndef BIGBOOT
+atmega328: LDSECTIONS  = -Wl,--section-start=.text=0x7e00 -Wl,--section-start=.version=0x7ffe
+else
+# bigboot version is 1k long; starts earlier
+atmega328: LDSECTIONS  = -Wl,--section-start=.text=0x7c00 -Wl,--section-start=.version=0x7ffe
+endif
 atmega328: $(PROGRAM)_atmega328.hex
 atmega328: $(PROGRAM)_atmega328.lst
 
 atmega328_isp: atmega328
 atmega328_isp: TARGET = atmega328
 atmega328_isp: MCU_TARGET = atmega328p
+ifndef BIGBOOT
 # 512 byte boot, SPIEN
 atmega328_isp: HFUSE ?= DE
+else
+# 1k byte boot, SPIEN
+atmega328_isp: HFUSE ?= DC
+endif
 # Low power xtal (16MHz) 16KCK/14CK+65ms
 atmega328_isp: LFUSE ?= FF
 # 2.7V brownout
-atmega328_isp: EFUSE ?= 05
+atmega328_isp: EFUSE ?= FD
 atmega328_isp: isp
 
 #Atmega1280
@@ -329,15 +359,24 @@ atmega8: TARGET = atmega8
 atmega8: MCU_TARGET = atmega8
 atmega8: CFLAGS += $(COMMON_OPTIONS)
 atmega8: AVR_FREQ ?= 16000000L 
+ifndef BIGBOOT
 atmega8: LDSECTIONS  = -Wl,--section-start=.text=0x1e00 -Wl,--section-start=.version=0x1ffe -Wl,--gc-sections -Wl,--undefined=optiboot_version
+else
+atmega8: LDSECTIONS  = -Wl,--section-start=.text=0x1c00 -Wl,--section-start=.version=0x1ffe -Wl,--gc-sections -Wl,--undefined=optiboot_version
+endif
 atmega8: $(PROGRAM)_atmega8.hex
 atmega8: $(PROGRAM)_atmega8.lst
 
 atmega8_isp: atmega8
 atmega8_isp: TARGET = atmega8
 atmega8_isp: MCU_TARGET = atmega8
+ifndef BIGBOOT
 # SPIEN, CKOPT (for full swing xtal), Bootsize=512B
 atmega8_isp: HFUSE ?= CC
+else
+# SPIEN, CKOPT (for full swing xtal), Bootsize=1024B
+atmega8_isp: HFUSE ?= CA
+endif
 # 2.7V brownout, 16MHz Xtal, 16KCK/14CK+65ms
 atmega8_isp: LFUSE ?= BF
 atmega8_isp: isp
@@ -508,6 +547,7 @@ include Makefile.atmel
 include Makefile.extras
 include Makefile.1284
 include Makefile.custom
+include Makefile.2560
 
 
 #---------------------------------------------------------------------------

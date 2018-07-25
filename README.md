@@ -1,6 +1,6 @@
 ## Optiboot Bootloader for Arduino and Atmel AVR ##
 
-![http://optiboot.googlecode.com/files/optiboot.png](http://optiboot.googlecode.com/files/optiboot.png)
+![docs/optiboot.png](docs/optiboot.png)
 
 ## NOTE: BIGBOOT enabled for ATmega328p
 
@@ -22,12 +22,29 @@ Optiboot is now installed by default on the Arduino Uno. It can be installed on 
 ## Additional Documentation
 More detailed documentation is being added (slowly) to the [repository wiki](https://github.com/Optiboot/optiboot/wiki).
 
+## Notes on IDE Version compatability
+Optiboot is "compatible", in a loose sense, with all versions of the Arduino IDE.  It was originally written at about the same time as v1.0, and has some "quirks" that date back to that timeframe.  Most significantly, install procedures and locations change between releases, and the ability to compile Optiboot using only the tools installed with the IDE broke in the v1.5 timeframe.
+
 ## To install into the Arduino software ##
+You do NOT need to "install" Optiboot if you are trying to update an installed platform that already uses some form of Optiboot.  In that case, you should probably just find and replace the existing .hex files from the platform support directories.  Using the Optiboot "install" procedure does not install any cores or variants, so it is only useful for CPUs that are already supported by the standard Arduino core (or, if all you want to do is install bootloaders.)
+
+The following instructions are based on using the Arduino "Board Manager", present in IDE versions 1.6.5 and later.
+
+  1. Find the desired Optiboot release on the [Optiboot Release page] (https://github.com/Optiboot/optiboot/releases).
+  2. Use the "Copy link address" feature of your browser to copy the URL of the associated **.json** file.
+  3. Paste this url into the "Additional Boards Manager URLs" field in the Arduino IDE "Preferences" pane. (Separate it from other URLs that might be present with a comma or click the icon to the right of the field to insert it on a new line.)
+  4. After closing the Preferences window, the **Tools/Boards/Boards Manager** menu should include an entry for that version of Optiboot.  Select that entry and click the **Install** button.
+
+For additional installation information, see the [Optiboot AddingOptibootChipsToIde Wiki page] (https://github.com/Optiboot/optiboot/wiki/AddingOptibootChipsToIde)
+
+
+<!---
   1. Download the latest using Git or the Zip download feature of GitHub.  If you download as a zip, also extract it.
   1. You will need to be using a recent version of the [Arduino environment](http://arduino.cc), version 18 or later.
   1. Create a 'hardware' directory inside your sketches folder.
   1. Copy the optiboot directory into the hardware directory.
   1. Restart the Arduino software. New boards will appear in the Tools>Board menu.
+--->
 
 ## To burn Optiboot onto an Arduino board ##
   1. Select the appropriate Optiboot board type (or non-Optiboot if you want to change back)
